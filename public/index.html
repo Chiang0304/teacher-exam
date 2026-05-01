@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國小教師檢定答題助手</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); min-height: 100vh; padding: 24px 16px; }
+        .container { max-width: 780px; margin: 0 auto; }
+        .site-title { text-align: center; color: white; font-size: 1.6rem; font-weight: 700; margin-bottom: 8px; }
+        .site-subtitle { text-align: center; color: rgba(255,255,255,0.75); font-size: 0.9rem; margin-bottom: 28px; }
+        .card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); }
+        .card-title { font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
+        .api-row { display: flex; gap: 8px; align-items: center; }
+        .api-row input { flex: 1; }
+        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #ef4444; }
+        .status-dot.ok { background: #10b981; }
+        .status-text { font-size: 0.8rem; color: #6b7280; margin-top: 8px; display: flex; align-items: center; }
+        input, select, textarea { width: 100%; padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 0.95rem; font-family: inherit; outline: none; transition: border-color 0.15s; color: #111827; background: white; }
+        input:focus, select:focus, textarea:focus { border-color: #4f46e5; }
+        textarea { resize: vertical; min-height: 120px; line-height: 1.7; }
+        .form-grid { display: grid; grid-template-columns: 120px 1fr 90px; gap: 12px; margin-bottom: 16px; }
+        .field { margin-top: 14px; }
+        label { display: block; font-size: 0.85rem; font-weight: 500; color: #374151; margin-bottom: 6px; }
+        .label-note { font-size: 0.75rem; color: #9ca3af; font-weight: normal; margin-left: 4px; }
+        hr.divider { border: none; border-top: 1px solid #f3f4f6; margin: 16px 0; }
+        .drop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .drop-zone { border: 2px dashed #d1d5db; border-radius: 12px; padding: 18px 12px; text-align: center; cursor: pointer; transition: all 0.15s; background: #fafafa; position: relative; }
+        .drop-zone:hover { border-color: #4f46e5; background: #f5f3ff; }
+        .drop-zone.drag-over { border-color: #4f46e5; background: #ede9fe; }
+        .drop-zone.loaded { border-color: #10b981; background: #f0fdf4; }
+        .drop-zone.error { border-color: #ef4444; background: #fef2f2; }
+        .drop-icon { font-size: 1.8rem; margin-bottom: 6px; }
+        .drop-label { font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 2px; }
+        .drop-sub { font-size: 0.75rem; color: #9ca3af; }
+        .drop-filename { font-size: 0.78rem; color: #10b981; font-weight: 500; margin-top: 4px; word-break: break-all; }
+        .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+        .pdf-status { font-size: 0.82rem; margin-top: 10px; min-height: 1.4em; display: flex; align-items: center; gap: 6px; }
+        .mini-spinner { width: 12px; height: 12px; border: 2px solid #e5e7eb; border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.75s linear infinite; flex-shrink: 0; }
+        .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .type-btn { padding: 10px; border: 2px solid #e5e7eb; border-radius: 10px; background: white; font-family: inherit; font-size: 0.9rem; color: #6b7280; cursor: pointer; transition: all 0.15s; }
+        .type-btn.active { border-color: #4f46e5; color: #4f46e5; background: #ede9fe; font-weight: 600; }
+        .ans-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .ans-btn { padding: 10px; border: 2px solid #e5e7eb; border-radius: 10px; background: white; font-family: inherit; font-size: 1rem; font-weight: 600; color: #6b7280; cursor: pointer; transition: all 0.15s; }
+        .ans-btn.selected { border-color: #4f46e5; color: white; background: #4f46e5; }
+        .ans-btn.none-btn { grid-column: 1/-1; font-size: 0.85rem; font-weight: normal; color: #9ca3af; }
+        .ans-btn.none-btn.selected { background: #f3f4f6; border-color: #d1d5db; color: #374151; }
+        .btn { padding: 11px 20px; border: none; border-radius: 10px; font-size: 0.95rem; font-family: inherit; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+        .btn-primary { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; width: 100%; margin-top: 16px; font-size: 1rem; padding: 13px; }
+        .btn-primary:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-ghost { background: #f3f4f6; color: #374151; font-size: 0.875rem; padding: 9px 16px; }
+        .btn-ghost:hover { background: #e5e7eb; }
+        .btn-save { background: #4f46e5; color: white; white-space: nowrap; padding: 10px 18px; }
+        .btn-save:hover { background: #4338ca; }
+        .btn-sm { font-size: 0.8rem; padding: 6px 12px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; }
+        .btn-sm:hover { background: #e5e7eb; }
+        .link-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        #result-card { display: none; }
+        .result-tag { display: inline-flex; align-items: center; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; font-size: 0.82rem; padding: 4px 14px; border-radius: 999px; margin-bottom: 16px; }
+        .answer-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; line-height: 1.85; font-size: 0.95rem; color: #1f2937; }
+        .loading-box { text-align: center; padding: 40px 20px; color: #6b7280; }
+        .spinner { width: 36px; height: 36px; border: 3px solid #e5e7eb; border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.75s linear infinite; margin: 0 auto 14px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-box { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 14px 16px; border-radius: 10px; font-size: 0.9rem; line-height: 1.5; }
+        .action-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f3f4f6; }
+        .note { font-size: 0.78rem; color: #9ca3af; margin-top: 8px; line-height: 1.5; }
+        @media (max-width: 520px) {
+            .form-grid { grid-template-columns: 1fr 1fr; }
+            .form-grid > div:nth-child(2) { grid-column: 1/-1; order: -1; }
+            .drop-grid, .type-grid, .link-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="site-title">國小教師檢定答題助手</h1>
+    <p class="site-subtitle">上傳試題 PDF，自動擷取題目，AI 提供詳細解析</p>
+
+    <div class="card">
+        <div class="card-title">Groq API 設定</div>
+        <div class="api-row">
+            <input type="password" id="api-key" placeholder="貼上 Groq API Key（gsk_...）">
+            <button class="btn btn-save" onclick="saveApiKey()">儲存</button>
+        </div>
+        <div class="status-text">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text">尚未設定 API Key</span>
+        </div>
+        <p class="note">免費取得：<strong>console.groq.com</strong> → API Keys → Create API Key</p>
+    </div>
+
+    <div class="card">
+        <div class="card-title">選擇題目</div>
+        <div class="form-grid">
+            <div>
+                <label>年度</label>
+                <select id="year"></select>
+            </div>
+            <div>
+                <label>科目</label>
+                <select id="subject">
+                    <option value="國語文能力測驗">國語文能力測驗</option>
+                    <option value="教育理念與實務">教育理念與實務</option>
+                    <option value="學習者發展與適性輔導">學習者發展與適性輔導</option>
+                    <option value="課程教學與評量">課程教學與評量</option>
+                    <option value="數學能力測驗">數學能力測驗</option>
+                </select>
+            </div>
+            <div>
+                <label>題號</label>
+                <input type="number" id="question-num" min="1" max="80" value="1" onchange="tryExtractQuestion()">
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <label>上傳 PDF <span class="label-note">從官網下載後拖曳至此，自動擷取題目與答案</span></label>
+        <div class="drop-grid">
+            <div class="drop-zone" id="drop-q" ondragover="onDrag(event,'drop-q')" ondragleave="offDrag('drop-q')" ondrop="onDrop(event,'q')">
+                <input type="file" accept=".pdf" onchange="onFileSelect(event,'q')">
+                <div class="drop-icon">📄</div>
+                <div class="drop-label">試題 PDF</div>
+                <div class="drop-sub">拖曳或點此選擇</div>
+                <div class="drop-filename" id="q-filename"></div>
+            </div>
+            <div class="drop-zone" id="drop-a" ondragover="onDrag(event,'drop-a')" ondragleave="offDrag('drop-a')" ondrop="onDrop(event,'a')">
+                <input type="file" accept=".pdf" onchange="onFileSelect(event,'a')">
+                <div class="drop-icon">📋</div>
+                <div class="drop-label">答案 PDF</div>
+                <div class="drop-sub">拖曳或點此選擇</div>
+                <div class="drop-filename" id="a-filename"></div>
+            </div>
+        </div>
+        <div class="pdf-status" id="pdf-status"></div>
+
+        <hr class="divider">
+
+        <label>題型</label>
+        <div class="type-grid">
+            <button class="type-btn active" id="type-mcq" onclick="setType('mcq')">選擇題</button>
+            <button class="type-btn" id="type-essay" onclick="setType('essay')">申論題 / 問答題</button>
+        </div>
+
+        <div class="field" id="ans-section">
+            <label>參考答案 <span class="label-note">自動從答案PDF擷取，AI 會驗證是否正確</span></label>
+            <div class="ans-grid">
+                <button class="ans-btn" id="ans-A" onclick="selectAnswer('A')">A</button>
+                <button class="ans-btn" id="ans-B" onclick="selectAnswer('B')">B</button>
+                <button class="ans-btn" id="ans-C" onclick="selectAnswer('C')">C</button>
+                <button class="ans-btn" id="ans-D" onclick="selectAnswer('D')">D</button>
+                <button class="ans-btn none-btn selected" id="ans-none" onclick="selectAnswer('')">不填，由 AI 自行推測</button>
+            </div>
+        </div>
+
+        <div class="field">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <label style="margin-bottom:0">題目原文 <span class="label-note">自動擷取，可手動修改</span></label>
+                <button class="btn-sm" onclick="aiExtract()" id="ai-extract-btn" style="display:none">AI 輔助擷取</button>
+            </div>
+            <textarea id="manual-question" placeholder="上傳試題 PDF 後自動填入，或手動貼上題目..."></textarea>
+        </div>
+
+        <button class="btn btn-primary" id="search-btn" onclick="searchQuestion()">查詢解答</button>
+    </div>
+
+    <div class="card">
+        <div class="card-title">外部資源</div>
+        <div class="link-grid">
+            <button class="btn btn-ghost" onclick="openTqa()">官方歷屆試題</button>
+            <button class="btn btn-ghost" onclick="openAmo()">阿摩線上測驗</button>
+            <button class="btn btn-ghost" onclick="googleSearch()">Google 搜尋詳解</button>
+        </div>
+        <p class="note">從「官方歷屆試題」下載試題與答案 PDF，分別拖曳到上方兩個框框。</p>
+    </div>
+
+    <div class="card" id="result-card">
+        <div id="result-content"></div>
+    </div>
+</div>
+
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const yearSelect = document.getElementById('year');
+    for (let y = 114; y >= 104; y--) {
+        const o = document.createElement('option');
+        o.value = y; o.textContent = `${y} 年`;
+        yearSelect.appendChild(o);
+    }
+
+    (function() {
+        const k = sessionStorage.getItem('tea-api-key');
+        if (k) { document.getElementById('api-key').value = k; setApiStatus(true); }
+    })();
+
+    let currentType = 'mcq', currentAnswer = '';
+    let qPdfText = '', aPdfText = '';
+
+    function saveApiKey() {
+        const k = document.getElementById('api-key').value.trim();
+        if (k.length < 10) { alert('格式不符'); return; }
+        sessionStorage.setItem('tea-api-key', k);
+        setApiStatus(true);
+    }
+    function setApiStatus(ok) {
+        document.getElementById('status-dot').className = `status-dot${ok?' ok':''}`;
+        document.getElementById('status-text').textContent = ok ? 'API Key 已設定' : '尚未設定 API Key';
+    }
+    function setType(t) {
+        currentType = t;
+        document.getElementById('type-mcq').className = 'type-btn'+(t==='mcq'?' active':'');
+        document.getElementById('type-essay').className = 'type-btn'+(t==='essay'?' active':'');
+        document.getElementById('ans-section').style.display = t==='mcq'?'block':'none';
+    }
+    function selectAnswer(v) {
+        currentAnswer = v;
+        ['A','B','C','D','none'].forEach(k => {
+            document.getElementById(`ans-${k}`).classList.toggle('selected', (v===''&&k==='none')||v===k);
+        });
+    }
+    function onDrag(e, id) { e.preventDefault(); document.getElementById(id).classList.add('drag-over'); }
+    function offDrag(id) { document.getElementById(id).classList.remove('drag-over'); }
+    function onDrop(e, type) {
+        e.preventDefault(); offDrag(`drop-${type}`);
+        const file = e.dataTransfer.files[0];
+        if (file) processPdf(file, type);
+    }
+    function onFileSelect(e, type) {
+        const file = e.target.files[0];
+        if (file) processPdf(file, type);
+    }
+
+    async function extractPdfText(file) {
+        const buf = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+        let text = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            let lastY = null;
+            for (const item of content.items) {
+                if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) text += '\n';
+                text += item.str;
+                lastY = item.transform[5];
+            }
+            text += '\n';
+        }
+        return text;
+    }
+
+    async function processPdf(file, type) {
+        const zone = document.getElementById(`drop-${type}`);
+        const fnEl = document.getElementById(`${type}-filename`);
+        setPdfStatus('reading', `正在讀取 ${type==='q'?'試題':'答案'} PDF...`);
+        zone.classList.remove('loaded','error');
+        try {
+            const text = await extractPdfText(file);
+            if (type === 'q') {
+                qPdfText = text;
+                zone.classList.add('loaded');
+                fnEl.textContent = file.name;
+                tryExtractQuestion();
+            } else {
+                aPdfText = text;
+                zone.classList.add('loaded');
+                fnEl.textContent = file.name;
+                tryExtractAnswer();
+            }
+        } catch(e) {
+            zone.classList.add('error');
+            setPdfStatus('error', `PDF 讀取失敗：${e.message}`);
+        }
+    }
+
+    function tryExtractQuestion() {
+        if (!qPdfText) return;
+        const num = parseInt(document.getElementById('question-num').value);
+        const q = extractQuestionFromText(qPdfText, num);
+        if (q) {
+            document.getElementById('manual-question').value = q;
+            document.getElementById('ai-extract-btn').style.display = 'none';
+            setPdfStatus('ok', `✓ 已擷取第 ${num} 題`);
+            if (aPdfText) tryExtractAnswer();
+        } else {
+            document.getElementById('manual-question').value = '';
+            document.getElementById('ai-extract-btn').style.display = 'inline-block';
+            setPdfStatus('warn', `⚠ 無法自動定位第 ${num} 題，請點「AI 輔助擷取」或手動複製`);
+        }
+    }
+
+    function tryExtractAnswer() {
+        if (!aPdfText) return;
+        const num = parseInt(document.getElementById('question-num').value);
+        const ans = extractAnswerFromText(aPdfText, num);
+        if (ans) selectAnswer(ans);
+    }
+
+    function extractQuestionFromText(text, num) {
+        const next = num + 1;
+        const patterns = [
+            new RegExp(`(?:^|\\n)\\s*${num}[.．、]([\\s\\S]+?)(?=\\n\\s*${next}[.．、]|$)`),
+            new RegExp(`(?:^|\\n)\\s*（${num}）([\\s\\S]+?)(?=\\n\\s*（${next}）|$)`),
+            new RegExp(`(?:^|\\n)\\s*第\\s*${num}\\s*題([\\s\\S]+?)(?=\\n\\s*第\\s*${next}\\s*題|$)`),
+        ];
+        for (const re of patterns) {
+            const m = text.match(re);
+            if (m) return (num + '. ' + m[1]).trim().substring(0, 800);
+        }
+        return null;
+    }
+
+    function extractAnswerFromText(text, num) {
+        const patterns = [
+            new RegExp(`(?:^|\\n|\\s)${num}[.．、)）\\s]+[（(]?([ABCD])[）)]?`, 'i'),
+            new RegExp(`第\\s*${num}\\s*題?\\s*[：:]?\\s*[（(]?([ABCD])[）)]?`, 'i'),
+        ];
+        for (const re of patterns) {
+            const m = text.match(re);
+            if (m) return m[1].toUpperCase();
+        }
+        return null;
+    }
+
+    async function aiExtract() {
+        const apiKey = sessionStorage.getItem('tea-api-key');
+        if (!apiKey) { alert('請先設定 API Key'); return; }
+        if (!qPdfText) { alert('請先上傳試題 PDF'); return; }
+        const num = document.getElementById('question-num').value;
+        const btn = document.getElementById('ai-extract-btn');
+        btn.textContent = '擷取中...'; btn.disabled = true;
+        setPdfStatus('reading', 'AI 正在從 PDF 找出題目...');
+        try {
+            const res = await fetch('/api/proxy', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    apiKey,
+                    system: '你是試題擷取助手，從試卷文字找出指定題號的完整題目（含選項）。只輸出題目本身。',
+                    prompt: `以下是試卷文字：\n\n${qPdfText.slice(0, 6000)}\n\n請找出第 ${num} 題的完整題目（含(A)(B)(C)(D)）。`
+                })
+            });
+            const data = await res.json();
+            document.getElementById('manual-question').value = data.text || '';
+            btn.style.display = 'none';
+            setPdfStatus('ok', `✓ AI 已擷取第 ${num} 題`);
+        } catch(e) {
+            setPdfStatus('warn', '⚠ AI 擷取失敗，請手動複製題目');
+        } finally { btn.textContent = 'AI 輔助擷取'; btn.disabled = false; }
+    }
+
+    function setPdfStatus(type, msg) {
+        const el = document.getElementById('pdf-status');
+        const c = { ok:'#10b981', warn:'#f59e0b', error:'#ef4444', reading:'#4f46e5' };
+        el.innerHTML = type==='reading'
+            ? `<span class="mini-spinner"></span><span style="color:${c.reading}">${msg}</span>`
+            : `<span style="color:${c[type]||'#6b7280'}">${msg}</span>`;
+    }
+
+    function getValues() {
+        return { year: document.getElementById('year').value, subject: document.getElementById('subject').value, num: document.getElementById('question-num').value, manual: document.getElementById('manual-question').value.trim() };
+    }
+    function openTqa() { window.open('https://tqa.rcpet.edu.tw/TEA_Exam/TEA03.aspx', '_blank'); }
+    function openAmo() {
+        const { subject } = getValues();
+        const m = { '國語文能力測驗':'國民小學 國語文能力測驗 教師檢定', '教育理念與實務':'國民小學 教育理念與實務 教師檢定', '學習者發展與適性輔導':'國民小學 學習者發展與適性輔導 教師檢定', '課程教學與評量':'國民小學 課程教學與評量 教師檢定', '數學能力測驗':'國民小學 數學能力測驗 教師檢定' };
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(m[subject])}+site:yamol.tw`, '_blank');
+    }
+    function googleSearch() {
+        const { year, subject, num, manual } = getValues();
+        const q = manual ? `"${manual.substring(0,40)}" 教師檢定解析` : `${year}年 國小教師檢定 ${subject} 第${num}題 詳解`;
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, '_blank');
+    }
+
+    async function searchQuestion() {
+        const apiKey = sessionStorage.getItem('tea-api-key') || document.getElementById('api-key').value.trim();
+        if (!apiKey) { alert('請先設定 API Key'); return; }
+        const { year, subject, num, manual } = getValues();
+        const btn = document.getElementById('search-btn');
+        const card = document.getElementById('result-card');
+        const content = document.getElementById('result-content');
+        card.style.display = 'block'; btn.disabled = true;
+        content.innerHTML = `<div class="loading-box"><div class="spinner"></div><div>AI 正在分析題目...</div></div>`;
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        const system = '你是國小教師資格考試（教師檢定）的專業解題老師。請用繁體中文回答，條理清晰、分點說明。';
+        const header = `【${year}年 國小教師檢定｜${subject}｜第 ${num} 題】`;
+        const qText = manual ? `\n\n題目原文：\n${manual}` : '';
+        let prompt;
+
+        if (currentType === 'mcq') {
+            if (currentAnswer) {
+                prompt = `${header}${qText}\n\n使用者提供的參考答案是【${currentAnswer}】。\n\n請依以下步驟回答：\n1. 先獨立判斷此題正確答案，說明理由\n2. 比對【${currentAnswer}】：\n   - 若相同：確認答案，詳細解析各選項，補充核心概念\n   - 若不同：⚠️ 指出「答案可能有誤」，說明你認為的正確答案\n3. 補充相關考試重點`;
+            } else {
+                prompt = `${header}${qText || '\n（未提供題目原文）'}\n\n請獨立判斷正確答案並詳細解析各選項。${!manual?'\n提醒：未提供題目原文，請說明推論依據。':''}`;
+            }
+        } else {
+            prompt = `${header}${qText || '\n（請根據科目常見申論考題作答）'}\n\n申論題，請提供：\n1. 作答架構與重點\n2. 完整示範答案（至少 300 字）\n3. 評分關鍵詞`;
+        }
+
+        try {
+            const res = await fetch('/api/proxy', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt, system, apiKey })
+            });
+            const data = await res.json();
+            const text = data.text || '（未收到回應）';
+            const typeLabel = currentType==='mcq'?(currentAnswer?`選擇題｜參考答案(${currentAnswer})`:'選擇題'):'申論題';
+            content.innerHTML = `
+                <div class="result-tag">${year}年｜${subject}｜第${num}題｜${typeLabel}</div>
+                <div class="answer-box">${fmt(text)}</div>
+                <div class="action-row">
+                    <button class="btn btn-ghost" onclick="openTqa()">官方試題 PDF</button>
+                    <button class="btn btn-ghost" onclick="openAmo()">阿摩搜尋</button>
+                    <button class="btn btn-ghost" onclick="googleSearch()">Google 詳解</button>
+                </div>`;
+        } catch(e) {
+            content.innerHTML = `<div class="error-box"><strong>錯誤</strong>：${esc(e.message)}<br><small>請確認 cmd 視窗正在執行 node proxy.js</small></div>`;
+        } finally { btn.disabled = false; }
+    }
+
+    function fmt(t) {
+        return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/【([^】]+)】/g,'<strong style="color:#4f46e5">【$1】</strong>')
+            .replace(/⚠️?/g,'<span style="color:#f59e0b">⚠️</span>')
+            .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>
