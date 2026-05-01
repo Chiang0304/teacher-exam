@@ -26,8 +26,18 @@
         label { display: block; font-size: 0.85rem; font-weight: 500; color: #374151; margin-bottom: 6px; }
         .label-note { font-size: 0.75rem; color: #9ca3af; font-weight: normal; margin-left: 4px; }
         hr.divider { border: none; border-top: 1px solid #f3f4f6; margin: 16px 0; }
+
         .drop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .drop-zone { border: 2px dashed #d1d5db; border-radius: 12px; padding: 18px 12px; text-align: center; cursor: pointer; transition: all 0.15s; background: #fafafa; position: relative; }
+        .drop-zone {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 18px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: #fafafa;
+            position: relative;
+        }
         .drop-zone:hover { border-color: #4f46e5; background: #f5f3ff; }
         .drop-zone.drag-over { border-color: #4f46e5; background: #ede9fe; }
         .drop-zone.loaded { border-color: #10b981; background: #f0fdf4; }
@@ -37,8 +47,10 @@
         .drop-sub { font-size: 0.75rem; color: #9ca3af; }
         .drop-filename { font-size: 0.78rem; color: #10b981; font-weight: 500; margin-top: 4px; word-break: break-all; }
         .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
         .pdf-status { font-size: 0.82rem; margin-top: 10px; min-height: 1.4em; display: flex; align-items: center; gap: 6px; }
         .mini-spinner { width: 12px; height: 12px; border: 2px solid #e5e7eb; border-top-color: #4f46e5; border-radius: 50%; animation: spin 0.75s linear infinite; flex-shrink: 0; }
+
         .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .type-btn { padding: 10px; border: 2px solid #e5e7eb; border-radius: 10px; background: white; font-family: inherit; font-size: 0.9rem; color: #6b7280; cursor: pointer; transition: all 0.15s; }
         .type-btn.active { border-color: #4f46e5; color: #4f46e5; background: #ede9fe; font-weight: 600; }
@@ -47,6 +59,7 @@
         .ans-btn.selected { border-color: #4f46e5; color: white; background: #4f46e5; }
         .ans-btn.none-btn { grid-column: 1/-1; font-size: 0.85rem; font-weight: normal; color: #9ca3af; }
         .ans-btn.none-btn.selected { background: #f3f4f6; border-color: #d1d5db; color: #374151; }
+
         .btn { padding: 11px 20px; border: none; border-radius: 10px; font-size: 0.95rem; font-family: inherit; font-weight: 500; cursor: pointer; transition: all 0.15s; }
         .btn-primary { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; width: 100%; margin-top: 16px; font-size: 1rem; padding: 13px; }
         .btn-primary:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
@@ -58,6 +71,7 @@
         .btn-sm { font-size: 0.8rem; padding: 6px 12px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; }
         .btn-sm:hover { background: #e5e7eb; }
         .link-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
         #result-card { display: none; }
         .result-tag { display: inline-flex; align-items: center; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; font-size: 0.82rem; padding: 4px 14px; border-radius: 999px; margin-bottom: 16px; }
         .answer-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; line-height: 1.85; font-size: 0.95rem; color: #1f2937; }
@@ -67,6 +81,7 @@
         .error-box { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 14px 16px; border-radius: 10px; font-size: 0.9rem; line-height: 1.5; }
         .action-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f3f4f6; }
         .note { font-size: 0.78rem; color: #9ca3af; margin-top: 8px; line-height: 1.5; }
+
         @media (max-width: 520px) {
             .form-grid { grid-template-columns: 1fr 1fr; }
             .form-grid > div:nth-child(2) { grid-column: 1/-1; order: -1; }
@@ -209,6 +224,7 @@
         document.getElementById('status-dot').className = `status-dot${ok?' ok':''}`;
         document.getElementById('status-text').textContent = ok ? 'API Key 已設定' : '尚未設定 API Key';
     }
+
     function setType(t) {
         currentType = t;
         document.getElementById('type-mcq').className = 'type-btn'+(t==='mcq'?' active':'');
@@ -221,10 +237,12 @@
             document.getElementById(`ans-${k}`).classList.toggle('selected', (v===''&&k==='none')||v===k);
         });
     }
+
     function onDrag(e, id) { e.preventDefault(); document.getElementById(id).classList.add('drag-over'); }
     function offDrag(id) { document.getElementById(id).classList.remove('drag-over'); }
     function onDrop(e, type) {
-        e.preventDefault(); offDrag(`drop-${type}`);
+        e.preventDefault();
+        offDrag(`drop-${type}`);
         const file = e.dataTransfer.files[0];
         if (file) processPdf(file, type);
     }
@@ -256,6 +274,7 @@
         const fnEl = document.getElementById(`${type}-filename`);
         setPdfStatus('reading', `正在讀取 ${type==='q'?'試題':'答案'} PDF...`);
         zone.classList.remove('loaded','error');
+
         try {
             const text = await extractPdfText(file);
             if (type === 'q') {
@@ -278,9 +297,9 @@
     function tryExtractQuestion() {
         if (!qPdfText) return;
         const num = parseInt(document.getElementById('question-num').value);
-        const q = extractQuestionFromText(qPdfText, num);
-        if (q) {
-            document.getElementById('manual-question').value = q;
+        const question = extractQuestionFromText(qPdfText, num);
+        if (question) {
+            document.getElementById('manual-question').value = question;
             document.getElementById('ai-extract-btn').style.display = 'none';
             setPdfStatus('ok', `✓ 已擷取第 ${num} 題`);
             if (aPdfText) tryExtractAnswer();
@@ -307,7 +326,11 @@
         ];
         for (const re of patterns) {
             const m = text.match(re);
-            if (m) return (num + '. ' + m[1]).trim().substring(0, 800);
+            if (m) {
+                let q = (num + '. ' + m[1]).trim();
+                if (q.length > 800) q = q.substring(0, 800);
+                return q.trim();
+            }
         }
         return null;
     }
@@ -332,13 +355,14 @@
         const btn = document.getElementById('ai-extract-btn');
         btn.textContent = '擷取中...'; btn.disabled = true;
         setPdfStatus('reading', 'AI 正在從 PDF 找出題目...');
+
         try {
             const res = await fetch('/api/proxy', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     apiKey,
-                    system: '你是試題擷取助手，從試卷文字找出指定題號的完整題目（含選項）。只輸出題目本身。',
-                    prompt: `以下是試卷文字：\n\n${qPdfText.slice(0, 6000)}\n\n請找出第 ${num} 題的完整題目（含(A)(B)(C)(D)）。`
+                    system: '你是試題擷取助手，請從試卷文字中找出指定題號的完整題目（含所有選項）。只輸出題目本身，不要其他說明。',
+                    prompt: `以下是試卷文字：\n\n${qPdfText.slice(0, 6000)}\n\n請找出第 ${num} 題的完整題目（含(A)(B)(C)(D)選項）。`
                 })
             });
             const data = await res.json();
@@ -347,19 +371,26 @@
             setPdfStatus('ok', `✓ AI 已擷取第 ${num} 題`);
         } catch(e) {
             setPdfStatus('warn', '⚠ AI 擷取失敗，請手動複製題目');
-        } finally { btn.textContent = 'AI 輔助擷取'; btn.disabled = false; }
+        } finally {
+            btn.textContent = 'AI 輔助擷取'; btn.disabled = false;
+        }
     }
 
     function setPdfStatus(type, msg) {
         const el = document.getElementById('pdf-status');
-        const c = { ok:'#10b981', warn:'#f59e0b', error:'#ef4444', reading:'#4f46e5' };
-        el.innerHTML = type==='reading'
-            ? `<span class="mini-spinner"></span><span style="color:${c.reading}">${msg}</span>`
-            : `<span style="color:${c[type]||'#6b7280'}">${msg}</span>`;
+        const colors = { ok: '#10b981', warn: '#f59e0b', error: '#ef4444', reading: '#4f46e5' };
+        el.innerHTML = type === 'reading'
+            ? `<span class="mini-spinner"></span><span style="color:${colors.reading}">${msg}</span>`
+            : `<span style="color:${colors[type]||'#6b7280'}">${msg}</span>`;
     }
 
     function getValues() {
-        return { year: document.getElementById('year').value, subject: document.getElementById('subject').value, num: document.getElementById('question-num').value, manual: document.getElementById('manual-question').value.trim() };
+        return {
+            year: document.getElementById('year').value,
+            subject: document.getElementById('subject').value,
+            num: document.getElementById('question-num').value,
+            manual: document.getElementById('manual-question').value.trim(),
+        };
     }
     function openTqa() { window.open('https://tqa.rcpet.edu.tw/TEA_Exam/TEA03.aspx', '_blank'); }
     function openAmo() {
@@ -380,23 +411,25 @@
         const btn = document.getElementById('search-btn');
         const card = document.getElementById('result-card');
         const content = document.getElementById('result-content');
-        card.style.display = 'block'; btn.disabled = true;
+
+        card.style.display = 'block';
+        btn.disabled = true;
         content.innerHTML = `<div class="loading-box"><div class="spinner"></div><div>AI 正在分析題目...</div></div>`;
         card.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         const system = '你是國小教師資格考試（教師檢定）的專業解題老師。請用繁體中文回答，條理清晰、分點說明。';
         const header = `【${year}年 國小教師檢定｜${subject}｜第 ${num} 題】`;
-        const qText = manual ? `\n\n題目原文：\n${manual}` : '';
+        const questionText = manual ? `\n\n題目原文：\n${manual}` : '';
         let prompt;
 
         if (currentType === 'mcq') {
             if (currentAnswer) {
-                prompt = `${header}${qText}\n\n使用者提供的參考答案是【${currentAnswer}】。\n\n請依以下步驟回答：\n1. 先獨立判斷此題正確答案，說明理由\n2. 比對【${currentAnswer}】：\n   - 若相同：確認答案，詳細解析各選項，補充核心概念\n   - 若不同：⚠️ 指出「答案可能有誤」，說明你認為的正確答案\n3. 補充相關考試重點`;
+                prompt = `${header}${questionText}\n\n使用者提供的參考答案是【${currentAnswer}】。\n\n請依以下步驟回答：\n1. 先獨立判斷此題正確答案，說明理由\n2. 比對【${currentAnswer}】：\n   - 若相同：確認答案，詳細解析各選項，補充核心概念\n   - 若不同：⚠️ 指出「答案可能有誤」，說明你認為的正確答案及原因\n3. 補充相關考試重點`;
             } else {
-                prompt = `${header}${qText || '\n（未提供題目原文）'}\n\n請獨立判斷正確答案並詳細解析各選項。${!manual?'\n提醒：未提供題目原文，請說明推論依據。':''}`;
+                prompt = `${header}${questionText || '\n（未提供題目原文）'}\n\n請獨立判斷正確答案並詳細解析各選項。${!manual?'\n提醒：未提供題目原文，請說明推論依據。':''}`;
             }
         } else {
-            prompt = `${header}${qText || '\n（請根據科目常見申論考題作答）'}\n\n申論題，請提供：\n1. 作答架構與重點\n2. 完整示範答案（至少 300 字）\n3. 評分關鍵詞`;
+            prompt = `${header}${questionText || '\n（請根據科目常見申論考題作答）'}\n\n申論題，請提供：\n1. 作答架構與重點（分點列出）\n2. 完整示範答案（至少 300 字）\n3. 評分關鍵詞與注意事項`;
         }
 
         try {
@@ -406,7 +439,7 @@
             });
             const data = await res.json();
             const text = data.text || '（未收到回應）';
-            const typeLabel = currentType==='mcq'?(currentAnswer?`選擇題｜參考答案(${currentAnswer})`:'選擇題'):'申論題';
+            const typeLabel = currentType==='mcq' ? (currentAnswer?`選擇題｜參考答案(${currentAnswer})`:'選擇題') : '申論題';
             content.innerHTML = `
                 <div class="result-tag">${year}年｜${subject}｜第${num}題｜${typeLabel}</div>
                 <div class="answer-box">${fmt(text)}</div>
@@ -416,7 +449,7 @@
                     <button class="btn btn-ghost" onclick="googleSearch()">Google 詳解</button>
                 </div>`;
         } catch(e) {
-            content.innerHTML = `<div class="error-box"><strong>錯誤</strong>：${esc(e.message)}<br><small>請確認 cmd 視窗正在執行 node proxy.js</small></div>`;
+            content.innerHTML = `<div class="error-box"><strong>錯誤</strong>：${esc(e.message)}<br><small>請確認 API Key 正確，或重新整理頁面後再試。</small></div>`;
         } finally { btn.disabled = false; }
     }
 
@@ -424,7 +457,8 @@
         return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
             .replace(/【([^】]+)】/g,'<strong style="color:#4f46e5">【$1】</strong>')
             .replace(/⚠️?/g,'<span style="color:#f59e0b">⚠️</span>')
-            .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+            .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+            .replace(/\n/g,'<br>');
     }
     function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 </script>
